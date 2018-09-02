@@ -46,9 +46,10 @@ window.App = {
   start: function() {
 
   var c = JSON.parse('[{"constant":false,"inputs":[{"name":"id","type":"uint256"}],"name":"startShipment","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[{"name":"id","type":"uint256"},{"name":"sensor","type":"address"}],"name":"putSensor","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[{"name":"id","type":"uint256"}],"name":"receiveShipment","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[{"name":"id","type":"uint256"}],"name":"checkShipment","outputs":[{"name":"exists","type":"bool"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[{"name":"id","type":"uint256"}],"name":"getShipmentInfo","outputs":[{"name":"shipmentId","type":"uint256"},{"name":"producer","type":"address"},{"name":"shipper","type":"address"},{"name":"receiver","type":"address"},{"name":"sensor","type":"address"},{"name":"dateAdded","type":"uint256"},{"name":"lastUpdated","type":"uint256"},{"name":"currentLatitude","type":"string"},{"name":"currentLongitude","type":"string"},{"name":"status","type":"uint8"},{"name":"metadata","type":"bytes"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[],"name":"shipmentCount","outputs":[{"name":"","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"name":"name","type":"string"},{"name":"shipper","type":"address"},{"name":"receiver","type":"address"},{"name":"metaData","type":"bytes"}],"name":"addShipment","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[{"name":"id","type":"uint256"},{"name":"latitude","type":"string"},{"name":"longitude","type":"string"}],"name":"updateLocation","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[{"name":"id","type":"uint256"}],"name":"refundShipment","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[],"name":"controlAuthority","outputs":[{"name":"","type":"address"}],"payable":false,"stateMutability":"view","type":"function"},{"inputs":[{"name":"_controlAuthority","type":"address"}],"payable":false,"stateMutability":"nonpayable","type":"constructor"},{"anonymous":false,"inputs":[{"indexed":false,"name":"id","type":"uint256"}],"name":"ShipmentAdded","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"name":"id","type":"uint256"},{"indexed":false,"name":"sensor","type":"address"}],"name":"SensorPlaced","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"name":"id","type":"uint256"},{"indexed":false,"name":"latitude","type":"string"},{"indexed":false,"name":"longitude","type":"string"}],"name":"LocationUpdated","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"name":"id","type":"uint256"},{"indexed":false,"name":"status","type":"uint8"}],"name":"StatusUpdated","type":"event"}]');
-    traceabilityContractABI = window.web3.eth.contract(c);
   
-	TSCMC = traceabilityContractABI.at("0x946a5b9b9e2dcfdd740e3b5e09d98eb5519669e6");
+  traceabilityContractABI = window.web3.eth.contract(c);
+  
+	TSCMC = traceabilityContractABI.at("0x138f96e009a1573135dd300e0944027ada98ee64");
 	
       
 if(window.web3!=undefined){ // Get the initial account balance so it can be displayed.
@@ -75,7 +76,12 @@ if(window.web3!=undefined){ // Get the initial account balance so it can be disp
     var metadata = $("#metadata").val();
 
     TSCMC.addShipment(name, shipper, receiver, metadata, {from:web3.eth.accounts[0]},function(error, result){
-        console.log(error, resu);
+        if(!error){
+          window.alert("Transaction sent. Please check after couple of minutes!!")
+        }
+        else{
+          window.alert("Error Ocurred!!");
+        }
     });
       
   },
@@ -90,7 +96,53 @@ if(window.web3!=undefined){ // Get the initial account balance so it can be disp
       }
       else{
         TSCMC.putSensor(id, sensor, {from:web3.eth.accounts[0]}, function(err, result){
-          console.log(err, result);
+          if(!error){
+            window.alert("Transaction sent. Please check after couple of minutes!!")
+          }
+          else{
+            window.alert("Error Ocurred!!");
+          }
+        })
+      }
+  });
+  },
+
+  startShipment: function() {
+    var id = $("#id").val();
+
+    TSCMC.checkShipment(id,function(error, result){
+      if(!result){
+        window.alert("Shipment does not exists!!")
+      }
+      else{
+        TSCMC.startShipment(id, {from:web3.eth.accounts[0]}, function(err, result){
+          if(!error){
+            window.alert("Transaction sent. Please check after couple of minutes!!")
+          }
+          else{
+            window.alert("Error Ocurred!!");
+          }
+        })
+      }
+  });
+  },
+  updateLocation: function() {
+    var id = $("#id").val();
+    var latitude = $("#latitude").val();
+    var longitude = $("#longitude").val();
+
+    TSCMC.checkShipment(id,function(error, result){
+      if(!result){
+        window.alert("Shipment does not exists!!")
+      }
+      else{
+        TSCMC.updateLocation(id, latitude.toString(), longitude.toString(), {from:web3.eth.accounts[0]}, function(err, result){
+          if(!error){
+            window.alert("Transaction sent. Please check after couple of minutes!!")
+          }
+          else{
+            window.alert("Error Ocurred!!");
+          }
         })
       }
   });
