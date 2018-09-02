@@ -52,21 +52,21 @@ window.App = {
 	TSCMC = traceabilityContractABI.at("0x138f96e009a1573135dd300e0944027ada98ee64");
 	
       
-if(window.web3!=undefined){ // Get the initial account balance so it can be displayed.
-       window.web3.eth.getAccounts(function(err, accs) {
-         if (err != null) {
-           alert("There was an error fetching your accounts.");
-           return;
-         }
-   
-         if (accs.length == 0) {
-           alert("Couldn't get any accounts! Make sure your Ethereum client is configured correctly.");
-           return;
-         }
-   
-        
-       });
-}
+  var addShipmentEvent = TSCMC.ShipmentAdded({}, { fromBlock: "latest"});
+  addShipmentEvent.watch(function (error, result) { 
+    alert("Shipment Added with id: "+ result.args.id.toNumber());
+    });
+
+    var sensorPlacedEvent = TSCMC.SensorPlaced({}, { fromBlock: "latest"});
+    sensorPlacedEvent.watch(function (error, result) { 
+      alert("Sensor is placed for shipment id: "+ result.args.id.toNumber());
+      });
+
+      var locationUpdatedEvent = TSCMC.LocationUpdated({}, { fromBlock: "latest"});
+      locationUpdatedEvent.watch(function (error, result) { 
+    alert("Location Updated for Shipment id: "+ result.args.id.toNumber());
+    });
+
   },  
   addShipment: function() {
     
@@ -137,6 +137,99 @@ if(window.web3!=undefined){ // Get the initial account balance so it can be disp
       }
       else{
         TSCMC.updateLocation(id, latitude.toString(), longitude.toString(), {from:web3.eth.accounts[0]}, function(err, result){
+          if(!error){
+            window.alert("Transaction sent. Please check after couple of minutes!!")
+          }
+          else{
+            window.alert("Error Ocurred!!");
+          }
+        })
+      }
+  });
+  },
+
+  trackLocation: function() {
+    var id = $("#id").val();
+    TSCMC.checkShipment(id,function(error, result){
+      if(!result){
+        window.alert("Shipment does not exists!!")
+      }
+      else{
+
+        TSCMC.getShipmentInfo(id, function(error, result){
+
+          var producer = result[1];
+          var receiver = result[3];
+          var shipper = result[2];
+          var sensor = result[4];
+          var lastUpdated = result[6];
+          var lat = result[7];
+          var long = result[8];
+          var status = result[9];
+
+          $.get( "http://maps.googleapis.com/maps/api/geocode/json",{latlng:lat + "," +long}, function( data ) {
+
+            $("#producer").text(producer);
+            $("#receiver").text(receiver);
+            $("#shipper").text(shipper);
+            $("#sensor").text(sensor);
+            $("#lastUpdated").text(new Date(lastUpdated*1000));
+            $("#status").text(status);
+            $("#location").text(data.results[0].formatted_address);        
+        });
+      });
+
+        var locationEvent = TSCMC.LocationUpdated({id:id}, { fromBlock: 2898449, toBlock: 'latest' });
+        locationEvent.watch(function (error, result) { 
+          var latitude = result.args.latitude;
+          var longitude = result.args.longitude;
+          var blockNumber = result.blockNumber;
+          
+          $("#trackTable").empty();
+
+          $("<tr> <th>Date</th> <th>Location</th></tr> ").appendTo("#trackTable")
+
+          $.get( "http://maps.googleapis.com/maps/api/geocode/json",{latlng:latitude + "," +longitude}, function( data ) {
+            var $tr = $('<tr>').append(
+              $('<td id='+blockNumber+'>').text(""),
+              $('<td>').text(data.results[0].formatted_address)
+            ).appendTo('#trackTable');   
+            web3.eth.getBlock(blockNumber, function(error, data){
+              $("#"+blockNumber).text(new Date(data.timestamp*1000));
+            });
+          });
+      });
+      }
+  });
+  },
+  receiveShipment: function() {
+    var id = $("#id").val();
+
+    TSCMC.checkShipment(id,function(error, result){
+      if(!result){
+        window.alert("Shipment does not exists!!")
+      }
+      else{
+        TSCMC.receiveShipment(id, {from:web3.eth.accounts[0]}, function(err, result){
+          if(!error){
+            window.alert("Transaction sent. Please check after couple of minutes!!")
+          }
+          else{
+            window.alert("Error Ocurred!!");
+          }
+        })
+      }
+  });
+  },
+  refundShipment: function() {
+    var id = $("#id").val();
+
+    TSCMC.checkShipment(id,function(error, result){
+      if(!result){
+        window.alert("Shipment does not exists!!")
+      }
+      else{
+        TSCMC.refundShipment(id, {from:web3.eth.accounts[0]}, function(err, result){
           if(!error){
             window.alert("Transaction sent. Please check after couple of minutes!!")
           }
